@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aktivasi Perangkat</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8f7ff;
+            color: #1e1b4b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .card {
+            background: #ffffff;
+            padding: 30px 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(76, 29, 149, 0.08);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        h2 {
+            color: #4c1d95;
+            margin-bottom: 12px;
+            font-size: 22px;
+        }
+        p {
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .device-id {
+            background: #f3e8ff;
+            color: #7c3aed;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="statusCard">
+        <div class="icon">⏳</div>
+        <h2>Device Activation</h2>
+        <p>Mohon tunggu sebentar, perangkat Anda sedang diverifikasi.</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Konfigurasi Firebase milik Anda
+        const firebaseConfig = {
+          apiKey: "AIzaSyBR-Uio7vtEcktTKF3vt673bO0Yeb8e6W8",
+          authDomain: "pesan-cbf23.firebaseapp.com",
+          projectId: "pesan-cbf23",
+          storageBucket: "pesan-cbf23.firebasestorage.app",
+          messagingSenderId: "267628061888",
+          appId: "1:267628061888:web:454e04e0663ee3bec07925",
+          measurementId: "G-S174QKYL3S"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Ambil atau buat ID Perangkat Unik
+        function getOrCreateDeviceId() {
+            let deviceId = localStorage.getItem('app_device_id');
+            if (!deviceId) {
+                deviceId = 'dev_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+                localStorage.setItem('app_device_id', deviceId);
+            }
+            return deviceId;
+        }
+
+        async function registerDevice() {
+            const card = document.getElementById('statusCard');
+            const deviceId = getOrCreateDeviceId();
+
+            try {
+                // Simpan ID Perangkat ke Firestore di koleksi "PerangkatTerdaftar"
+                const deviceRef = doc(db, "PerangkatTerdaftar", deviceId);
+                await setDoc(deviceRef, {
+                    registeredAt: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    status: "active"
+                }, { merge: true });
+
+                // Tampilan Berhasil
+                card.innerHTML = `
+                    <div class="icon">✅</div>
+                    <h2>Aktivasi Berhasil!</h2>
+                    <p>Perangkat ini telah terverifikasi secara resmi.</p>
+                    <div class="device-id">ID: ${deviceId}</div>
+                `;
+            } catch (error) {
+                console.error("Gagal memverifikasi perangkat:", error);
+                card.innerHTML = `
+                    <div class="icon">❌</div>
+                    <h2>Gagal memverifikasi</h2>
+                    <p>Terjadi kesalahan saat menghubungkan ke server. Silakan coba lagi.</p>
+                `;
+            }
+        }
+
+        registerDevice();
+    </script>
+</body>
+</html>
